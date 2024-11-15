@@ -5,7 +5,7 @@ import { MongoClient, ObjectId } from "mongodb";
 import { Transcript } from "../types";
 
 const app: Express = express();
-const port = process.env.PORT || 5000;
+const port = parseInt(process.env.PORT || "5000");
 
 // MongoDB Connection
 const mongoUrl = process.env.MONGODB_URI || "mongodb://localhost:27017";
@@ -151,7 +151,7 @@ app.use(
 
 // Start server
 connectToDb().then(() => {
-  app.listen(port, () => {
+  app.listen(port, "0.0.0.0", () => {
     console.log(`Server is running on port ${port}`);
   });
 });
