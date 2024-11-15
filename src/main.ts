@@ -2,9 +2,10 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import morgan from "morgan";
 import { MongoClient, ObjectId } from "mongodb";
+import { Transcript } from "../types";
 
 const app: Express = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 // MongoDB Connection
 const mongoUrl = process.env.MONGODB_URI || "mongodb://localhost:27017";
@@ -71,69 +72,60 @@ app.get("/users", async (_req: Request, res: Response) => {
   }
 });
 
-app.get("/users/:id", async (req: Request, res: Response) => {
+// Transcript Webhook Route
+app.post("/webhook/transcript", async (req: Request, res: Response) => {
   try {
-    const id = new ObjectId(req.params.id);
-    const user = await db.db(dbName).collection("users").findOne({ _id: id });
+    const uid = req.query.uid;
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.json(user);
-  } catch (error) {
-    console.error("Error fetching user:", error);
-    res.status(500).json({ error: "Failed to fetch user" });
-  }
-});
-
-app.put("/users/:id", async (req: Request, res: Response) => {
-  try {
-    const id = new ObjectId(req.params.id);
-    const { name, email } = req.body;
-
-    if (!name && !email) {
+    if (!uid || typeof uid !== "string") {
       return res
         .status(400)
-        .json({ error: "At least one field to update is required" });
+        .json({ error: "User ID (uid) is required as a query parameter" });
     }
 
-    const updateData: Partial<User> = {};
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
+    const transcript: Transcript = req.body;
 
+    // Validate the transcript data
+    if (!transcript || !transcript.transcript_segments) {
+      return res.status(400).json({ error: "Invalid transcript data" });
+    }
+
+    // Add metadata
+    const transcriptWithMetadata = {
+      ...transcript,
+      userId: uid,
+      receivedAt: new Date(),
+    };
+
+    // Store in MongoDB
     const result = await db
       .db(dbName)
-      .collection("users")
-      .updateOne({ _id: id }, { $set: updateData });
+      .collection("transcripts")
+      .insertOne(transcriptWithMetadata);
 
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.json({ message: "User updated successfully" });
+    res.status(201).json({
+      message: "Transcript stored successfully",
+      transcriptId: result.insertedId,
+    });
   } catch (error) {
-    console.error("Error updating user:", error);
-    res.status(500).json({ error: "Failed to update user" });
+    console.error("Error storing transcript:", error);
+    res.status(500).json({ error: "Failed to store transcript" });
   }
 });
 
-app.delete("/users/:id", async (req: Request, res: Response) => {
+// Get all transcripts endpoint
+app.get("/transcripts", async (_req: Request, res: Response) => {
   try {
-    const id = new ObjectId(req.params.id);
-    const result = await db
+    const transcripts = await db
       .db(dbName)
-      .collection("users")
-      .deleteOne({ _id: id });
+      .collection("transcripts")
+      .find({})
+      .toArray();
 
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.json({ message: "User deleted successfully" });
+    res.json(transcripts);
   } catch (error) {
-    console.error("Error deleting user:", error);
-    res.status(500).json({ error: "Failed to delete user" });
+    console.error("Error fetching transcripts:", error);
+    res.status(500).json({ error: "Failed to fetch transcripts" });
   }
 });
 
