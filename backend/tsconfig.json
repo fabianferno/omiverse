@@ -11,6 +11,5 @@
     "allowJs": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts", "src/data/attestation.js", "types/**/*.ts"],
   "exclude": ["node_modules"]
 }
