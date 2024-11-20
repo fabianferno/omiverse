@@ -2,13 +2,15 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import morgan from "morgan";
 import { MongoClient, ObjectId } from "mongodb";
-import { Transcript } from "../types";
+import { TranscriptSegment } from "../types";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app: Express = express();
-const port = parseInt(process.env.PORT || "5000");
+const port = parseInt(process.env.PORT || "4000");
 
 // MongoDB Connection
-const mongoUrl = process.env.MONGODB_URI || "mongodb://localhost:27017";
+const mongoUrl = process.env.MONGO_URL || "mongodb://localhost:27017";
 const dbName = "omiverse";
 let db: MongoClient;
 
@@ -34,6 +36,11 @@ interface User {
   name: string;
   email: string;
   createdAt: Date;
+}
+
+interface TranscriptWithId {
+  sessionId: string;
+  segments: TranscriptSegment[];
 }
 
 // User Routes
@@ -83,10 +90,14 @@ app.post("/webhook/transcript", async (req: Request, res: Response) => {
         .json({ error: "User ID (uid) is required as a query parameter" });
     }
 
-    const transcript: Transcript = req.body;
+    const transcript: TranscriptWithId = req.body;
 
     // Validate the transcript data
-    if (!transcript || !transcript.transcript_segments) {
+    if (
+      !transcript ||
+      !transcript.segments ||
+      transcript.segments.length === 0
+    ) {
       return res.status(400).json({ error: "Invalid transcript data" });
     }
 
