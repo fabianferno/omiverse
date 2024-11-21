@@ -4,6 +4,7 @@ import morgan from "morgan";
 import { MongoClient, ObjectId } from "mongodb";
 import { TranscriptSegment } from "../types";
 import dotenv from "dotenv";
+import { getEmbedding } from "./utils/get-embeddings";
 dotenv.config();
 
 const app: Express = express();
@@ -106,6 +107,9 @@ app.post("/webhook/transcript", async (req: Request, res: Response) => {
       ...transcript,
       userId: uid,
       receivedAt: new Date(),
+      embeddings: getEmbedding(
+        transcript.segments.map((segment) => segment.text).join(" ")
+      ),
     };
 
     // Store in MongoDB
