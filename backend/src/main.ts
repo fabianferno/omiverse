@@ -5,6 +5,8 @@ import { MongoClient, ObjectId } from "mongodb";
 import { TranscriptSegment } from "../types";
 import dotenv from "dotenv";
 import { getEmbedding } from "./utils/get-embeddings";
+import { extractEntitiesAndRelationships } from "./utils/openai-helpers";
+import { Noun, Relationship, GraphData } from "../types";
 dotenv.config();
 
 const app: Express = express();
@@ -80,6 +82,59 @@ app.get("/users", async (_req: Request, res: Response) => {
   }
 });
 
+// Process transcript and extract entities
+async function processTranscript(
+  transcriptId: string,
+  text: string,
+  userId: string
+) {
+  const extracted = await extractEntitiesAndRelationships(text);
+
+  // Store nouns
+  for (const noun of extracted.nouns) {
+    await db
+      .db(dbName)
+      .collection("nouns")
+      .updateOne(
+        { userId, baseForm: noun.baseForm },
+        {
+          $setOnInsert: {
+            userId,
+            name: noun.text,
+            type: noun.type,
+            baseForm: noun.baseForm,
+            createdAt: new Date(),
+          },
+        },
+        { upsert: true }
+      );
+  }
+
+  // Store relationships
+  for (const rel of extracted.relationships) {
+    const sourceNoun = await db
+      .db(dbName)
+      .collection("nouns")
+      .findOne({ userId, baseForm: rel.source });
+    const targetNoun = await db
+      .db(dbName)
+      .collection("nouns")
+      .findOne({ userId, baseForm: rel.target });
+
+    if (sourceNoun && targetNoun) {
+      await db.db(dbName).collection("relationships").insertOne({
+        userId,
+        sourceNounId: sourceNoun._id,
+        targetNounId: targetNoun._id,
+        action: rel.action,
+        baseAction: rel.baseAction,
+        timestamp: new Date(),
+        transcriptId,
+      });
+    }
+  }
+}
+
 // Transcript Webhook Route
 app.post("/webhook/transcript", async (req: Request, res: Response) => {
   try {
@@ -118,13 +173,19 @@ app.post("/webhook/transcript", async (req: Request, res: Response) => {
       .collection("transcripts")
       .insertOne(transcriptWithMetadata);
 
+    // Process the transcript text
+    const fullText = transcript.segments
+      .map((segment) => segment.text)
+      .join(" ");
+    await processTranscript(result.insertedId.toString(), fullText, uid);
+
     res.status(201).json({
-      message: "Transcript stored successfully",
+      message: "Transcript stored and processed successfully",
       transcriptId: result.insertedId,
     });
   } catch (error) {
-    console.error("Error storing transcript:", error);
-    res.status(500).json({ error: "Failed to store transcript" });
+    console.error("Error processing transcript:", error);
+    res.status(500).json({ error: "Failed to process transcript" });
   }
 });
 
@@ -141,6 +202,94 @@ app.get("/transcripts", async (_req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching transcripts:", error);
     res.status(500).json({ error: "Failed to fetch transcripts" });
+  }
+});
+
+// Get knowledge graph data
+app.get("/graph", async (req: Request, res: Response) => {
+  try {
+    const userId = req.query.userId as string;
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    const nouns = await db
+      .db(dbName)
+      .collection("nouns")
+      .find({ userId })
+      .toArray();
+    const relationships = await db
+      .db(dbName)
+      .collection("relationships")
+      .find({ userId })
+      .toArray();
+
+    const graphData: GraphData = {
+      nodes: nouns.map((noun) => ({
+        id: noun._id.toString(),
+        label: noun.name,
+        type: noun.type,
+      })),
+      edges: relationships.map((rel) => ({
+        source: rel.sourceNounId,
+        target: rel.targetNounId,
+        label: rel.action,
+      })),
+    };
+
+    res.json(graphData);
+  } catch (error) {
+    console.error("Error fetching graph data:", error);
+    res.status(500).json({ error: "Failed to fetch graph data" });
+  }
+});
+
+// Search by topic using embeddings
+app.get("/search", async (req: Request, res: Response) => {
+  try {
+    const { query, userId } = req.query;
+    if (!query || !userId) {
+      return res.status(400).json({ error: "query and userId are required" });
+    }
+
+    const queryEmbedding = await getEmbedding(query);
+
+    const results = await db
+      .db(dbName)
+      .collection("transcripts")
+      .aggregate([
+        {
+          $match: { userId },
+        },
+        {
+          $addFields: {
+            similarity: {
+              $function: {
+                body: function (a: number[], b: number[]) {
+                  return a.reduce(
+                    (sum: number, val: number, i: number) => sum + val * b[i],
+                    0
+                  );
+                },
+                args: ["$embeddings", queryEmbedding],
+                lang: "js",
+              },
+            },
+          },
+        },
+        {
+          $sort: { similarity: -1 },
+        },
+        {
+          $limit: 5,
+        },
+      ])
+      .toArray();
+
+    res.json(results);
+  } catch (error) {
+    console.error("Error searching transcripts:", error);
+    res.status(500).json({ error: "Failed to search transcripts" });
   }
 });
 

@@ -1,8 +1,9 @@
 export interface TranscriptSegment {
   text: string;
   speaker: string;
-  speakerId: number;
+  speaker_id: number;
   is_user: boolean;
+  person_id: string | null;
   start: number;
   end: number;
 }
@@ -37,4 +38,37 @@ export interface Transcript {
   structured: StructuredData;
   apps_response: AppResponse[];
   discarded: boolean;
+}
+
+export interface Noun {
+  _id?: string;
+  userId: string;
+  name: string;
+  type: "PERSON" | "PLACE" | "THING" | "OTHER";
+  baseForm: string;
+  createdAt: Date;
+}
+
+export interface Relationship {
+  _id?: string;
+  userId: string;
+  sourceNounId: string;
+  targetNounId: string;
+  action: string;
+  baseAction: string;
+  timestamp: Date;
+  transcriptId: string;
+}
+
+export interface GraphData {
+  nodes: Array<{
+    id: string;
+    label: string;
+    type: string;
+  }>;
+  edges: Array<{
+    source: string;
+    target: string;
+    label: string;
+  }>;
 }
