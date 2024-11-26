@@ -12,6 +12,5 @@ export async function getEmbedding(text: any) {
     input: text,
     encoding_format: "float",
   });
-  console.log(results.data[0].embedding);
   return results.data[0].embedding;
 }

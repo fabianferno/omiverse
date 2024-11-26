@@ -90,9 +90,11 @@ async function processTranscript(
 ) {
   const extracted = await extractEntitiesAndRelationships(text);
 
+  console.log("Extracted:", extracted);
+
   // Store nouns
   for (const noun of extracted.nouns) {
-    await db
+    const res = await db
       .db(dbName)
       .collection("nouns")
       .updateOne(
@@ -108,10 +110,12 @@ async function processTranscript(
         },
         { upsert: true }
       );
+    console.log(res);
   }
 
   // Store relationships
   for (const rel of extracted.relationships) {
+    console.log("Rel:", rel);
     const sourceNoun = await db
       .db(dbName)
       .collection("nouns")
