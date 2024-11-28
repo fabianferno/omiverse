@@ -26,7 +26,7 @@ async function callTranscriptWebhook() {
     structured: {
       title: "Participation in ETH Global Hackathon",
       overview:
-        "Leo participated in ETH Global Hackathon in Singapore with Fabian Ferno and Daniel Mark.",
+        "Leo participated in ETH Global Hackathon in Bangkok with Fabian Ferno.",
       emoji: "💻",
       category: "technology",
       action_items: [],
@@ -34,7 +34,7 @@ async function callTranscriptWebhook() {
     },
     transcript_segments: [
       {
-        text: "Leo participated in ETH Global Hackathon in Singapore with Fabian Ferno and Daniel Mark.",
+        text: "Leo participated in ETH Global Hackathon in Bangkok with Fabian Ferno.",
         speaker: "SPEAKER_0",
         speaker_id: 0,
         is_user: false,

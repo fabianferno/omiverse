@@ -337,9 +337,28 @@ app.get("/search", async (req: Request, res: Response) => {
       relationships as Query_Relationship[]
     );
 
+    // Get the nouns mentioned in the answer
+    const mentionedNouns = new Set<string>();
+    relationships.forEach((r) => {
+      const answerLower = answer.toLowerCase();
+      if (
+        answerLower.includes(r.sourceNoun.name.toLowerCase()) &&
+        answerLower.includes(r.targetNoun.name.toLowerCase())
+      ) {
+        mentionedNouns.add(r.sourceNounId);
+        mentionedNouns.add(r.targetNounId);
+      }
+    });
+
+    // Filter relationships to only include those where both nouns are mentioned
+    const relevantRelationships = relationships.filter(
+      (r) =>
+        mentionedNouns.has(r.sourceNounId) && mentionedNouns.has(r.targetNounId)
+    );
+
     // Convert relationships to graph data format
     const nouns = new Map();
-    relationships.forEach((r) => {
+    relevantRelationships.forEach((r) => {
       if (r.sourceNoun) {
         nouns.set(r.sourceNounId, {
           id: r.sourceNounId,
@@ -358,7 +377,7 @@ app.get("/search", async (req: Request, res: Response) => {
 
     const graphData: GraphData = {
       nodes: Array.from(nouns.values()),
-      edges: relationships.map((rel) => ({
+      edges: relevantRelationships.map((rel) => ({
         source: rel.sourceNounId,
         target: rel.targetNounId,
         label: rel.action,
@@ -369,7 +388,7 @@ app.get("/search", async (req: Request, res: Response) => {
       answer,
       context: {
         transcripts: relevantTranscripts,
-        relationships: relationships.map((r) => ({
+        relationships: relevantRelationships.map((r) => ({
           source: r.sourceNoun.name,
           action: r.action,
           target: r.targetNoun.name,
