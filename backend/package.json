@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/fabianferno/express-typescript-boilerplate#readme",
   "dependencies": {
-    "axios": "^0.27.2",
+    "axios": "^1.7.8",
     "body-parser": "1.20.2",
     "colors": "1.4.0",
     "cors": "2.8.5",

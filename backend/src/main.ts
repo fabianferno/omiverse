@@ -2,7 +2,7 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import morgan from "morgan";
 import { MongoClient, ObjectId } from "mongodb";
-import { TranscriptSegment } from "../types";
+import { TranscriptSegment, TranscriptData } from "../types/transcript";
 import dotenv from "dotenv";
 import { getEmbedding } from "./utils/get-embeddings";
 import { extractEntitiesAndRelationships } from "./utils/openai-helpers";
@@ -39,11 +39,6 @@ interface User {
   name: string;
   email: string;
   createdAt: Date;
-}
-
-interface TranscriptWithId {
-  sessionId: string;
-  segments: TranscriptSegment[];
 }
 
 // User Routes
@@ -110,7 +105,7 @@ async function processTranscript(
         },
         { upsert: true }
       );
-    console.log(res);
+    // console.log(res);
   }
 
   // Store relationships
@@ -150,14 +145,11 @@ app.post("/webhook/transcript", async (req: Request, res: Response) => {
         .json({ error: "User ID (uid) is required as a query parameter" });
     }
 
-    const transcript: TranscriptWithId = req.body;
+    // console.log(req.body);
+    const transcript: TranscriptData = req.body;
 
     // Validate the transcript data
-    if (
-      !transcript ||
-      !transcript.segments ||
-      transcript.segments.length === 0
-    ) {
+    if (!transcript || !transcript.structured.overview) {
       return res.status(400).json({ error: "Invalid transcript data" });
     }
 
@@ -167,7 +159,8 @@ app.post("/webhook/transcript", async (req: Request, res: Response) => {
       userId: uid,
       receivedAt: new Date(),
       embeddings: getEmbedding(
-        transcript.segments.map((segment) => segment.text).join(" ")
+        transcript.structured.overview
+        // transcript.transcript_segments.map((segment) => segment.text).join(" ")
       ),
     };
 
@@ -178,9 +171,8 @@ app.post("/webhook/transcript", async (req: Request, res: Response) => {
       .insertOne(transcriptWithMetadata);
 
     // Process the transcript text
-    const fullText = transcript.segments
-      .map((segment) => segment.text)
-      .join(" ");
+    const fullText = transcript.structured.overview;
+
     await processTranscript(result.insertedId.toString(), fullText, uid);
 
     res.status(201).json({
