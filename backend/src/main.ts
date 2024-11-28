@@ -1,12 +1,13 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import morgan from "morgan";
-import { MongoClient, ObjectId } from "mongodb";
+import { MongoClient, ObjectId, Document } from "mongodb";
 import { TranscriptSegment, TranscriptData } from "../types/transcript";
 import dotenv from "dotenv";
 import { getEmbedding } from "./utils/get-embeddings";
 import { extractEntitiesAndRelationships } from "./utils/openai-helpers";
 import { Noun, Relationship, GraphData } from "../types";
+import { generateAnswer, Query_Relationship } from "./utils/answer-generator";
 dotenv.config();
 
 const app: Express = express();
@@ -248,46 +249,154 @@ app.get("/search", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "query and userId are required" });
     }
 
-    const queryEmbedding = await getEmbedding(query);
+    // Get embedding for the query
+    const queryEmbedding = await getEmbedding(query.toString());
 
-    const results = await db
+    // First get all transcripts for the user
+    const transcripts = await db
       .db(dbName)
       .collection("transcripts")
+      .find({ userId })
+      .toArray();
+
+    // Calculate similarities in memory
+    const relevantTranscripts = transcripts
+      .map((transcript) => ({
+        ...transcript,
+        similarity: calculateCosineSimilarity(
+          queryEmbedding,
+          transcript.embeddings
+        ),
+      }))
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, 5);
+
+    // Get all relationships from these transcripts
+    const transcriptIds = relevantTranscripts.map((t) => t._id.toString());
+    const relationships = await db
+      .db(dbName)
+      .collection("relationships")
       .aggregate([
         {
-          $match: { userId },
-        },
-        {
-          $addFields: {
-            similarity: {
-              $function: {
-                body: function (a: number[], b: number[]) {
-                  return a.reduce(
-                    (sum: number, val: number, i: number) => sum + val * b[i],
-                    0
-                  );
-                },
-                args: ["$embeddings", queryEmbedding],
-                lang: "js",
-              },
-            },
+          $match: {
+            userId: userId.toString(),
+            transcriptId: { $in: transcriptIds },
           },
         },
         {
-          $sort: { similarity: -1 },
+          $lookup: {
+            from: "nouns",
+            localField: "sourceNounId",
+            foreignField: "_id",
+            as: "sourceNoun",
+          },
         },
         {
-          $limit: 5,
+          $lookup: {
+            from: "nouns",
+            localField: "targetNounId",
+            foreignField: "_id",
+            as: "targetNoun",
+          },
+        },
+        {
+          $unwind: "$sourceNoun",
+        },
+        {
+          $unwind: "$targetNoun",
+        },
+        {
+          $project: {
+            _id: 1,
+            userId: 1,
+            sourceNounId: 1,
+            targetNounId: 1,
+            action: 1,
+            baseAction: 1,
+            timestamp: 1,
+            transcriptId: 1,
+            sourceNoun: {
+              name: "$sourceNoun.name",
+              type: "$sourceNoun.type",
+              baseForm: "$sourceNoun.baseForm",
+            },
+            targetNoun: {
+              name: "$targetNoun.name",
+              type: "$targetNoun.type",
+              baseForm: "$targetNoun.baseForm",
+            },
+          },
         },
       ])
       .toArray();
 
-    res.json(results);
+    // Use GPT to generate a natural language answer
+    const answer = await generateAnswer(
+      query.toString(),
+      relevantTranscripts,
+      relationships as Query_Relationship[]
+    );
+
+    // Convert relationships to graph data format
+    const nouns = new Map();
+    relationships.forEach((r) => {
+      if (r.sourceNoun) {
+        nouns.set(r.sourceNounId, {
+          id: r.sourceNounId,
+          label: r.sourceNoun.name,
+          type: r.sourceNoun.type,
+        });
+      }
+      if (r.targetNoun) {
+        nouns.set(r.targetNounId, {
+          id: r.targetNounId,
+          label: r.targetNoun.name,
+          type: r.targetNoun.type,
+        });
+      }
+    });
+
+    const graphData: GraphData = {
+      nodes: Array.from(nouns.values()),
+      edges: relationships.map((rel) => ({
+        source: rel.sourceNounId,
+        target: rel.targetNounId,
+        label: rel.action,
+      })),
+    };
+
+    res.json({
+      answer,
+      context: {
+        transcripts: relevantTranscripts,
+        relationships: relationships.map((r) => ({
+          source: r.sourceNoun.name,
+          action: r.action,
+          target: r.targetNoun.name,
+          type: {
+            source: r.sourceNoun.type,
+            target: r.targetNoun.type,
+          },
+        })),
+      },
+      graphData,
+    });
   } catch (error) {
-    console.error("Error searching transcripts:", error);
-    res.status(500).json({ error: "Failed to search transcripts" });
+    console.error("Error searching:", error);
+    res.status(500).json({ error: "Failed to search" });
   }
 });
+
+// Helper function to calculate cosine similarity
+function calculateCosineSimilarity(a: number[], b: number[]): number {
+  if (!a || !b || a.length !== b.length) return 0;
+
+  const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
+  const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
+  const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+
+  return dotProduct / (magnitudeA * magnitudeB);
+}
 
 // Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {

@@ -34,7 +34,7 @@ async function callTranscriptWebhook() {
     },
     transcript_segments: [
       {
-        text: "I participated Fabian Fourno in ETH Global Hackathon in Bangkok.",
+        text: "Leo participated in ETH Global Hackathon in Singapore with Fabian Ferno and Daniel Mark.",
         speaker: "SPEAKER_0",
         speaker_id: 0,
         is_user: false,
