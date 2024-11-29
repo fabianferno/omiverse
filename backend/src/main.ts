@@ -43,40 +43,40 @@ interface User {
 }
 
 // User Routes
-app.post("/users", async (req: Request, res: Response) => {
-  try {
-    const { name, email } = req.body;
+// app.post("/users", async (req: Request, res: Response) => {
+//   try {
+//     const { name, email } = req.body;
 
-    if (!name || !email) {
-      return res.status(400).json({ error: "Name and email are required" });
-    }
+//     if (!name || !email) {
+//       return res.status(400).json({ error: "Name and email are required" });
+//     }
 
-    const user: User = {
-      name,
-      email,
-      createdAt: new Date(),
-    };
+//     const user: User = {
+//       name,
+//       email,
+//       createdAt: new Date(),
+//     };
 
-    const result = await db.db(dbName).collection("users").insertOne(user);
-    res.status(201).json({
-      message: "User created successfully",
-      userId: result.insertedId,
-    });
-  } catch (error) {
-    console.error("Error creating user:", error);
-    res.status(500).json({ error: "Failed to create user" });
-  }
-});
+//     const result = await db.db(dbName).collection("users").insertOne(user);
+//     res.status(201).json({
+//       message: "User created successfully",
+//       userId: result.insertedId,
+//     });
+//   } catch (error) {
+//     console.error("Error creating user:", error);
+//     res.status(500).json({ error: "Failed to create user" });
+//   }
+// });
 
-app.get("/users", async (_req: Request, res: Response) => {
-  try {
-    const users = await db.db(dbName).collection("users").find({}).toArray();
-    res.json(users);
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ error: "Failed to fetch users" });
-  }
-});
+// app.get("/users", async (_req: Request, res: Response) => {
+//   try {
+//     const users = await db.db(dbName).collection("users").find({}).toArray();
+//     res.json(users);
+//   } catch (error) {
+//     console.error("Error fetching users:", error);
+//     res.status(500).json({ error: "Failed to fetch users" });
+//   }
+// });
 
 // Process transcript and extract entities
 async function processTranscript(
