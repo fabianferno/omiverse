@@ -13,6 +13,7 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@rainbow-me/rainbowkit": "^2.0.1",
     "@tanstack/react-query": "^5.25.0",
+    "@twa-dev/sdk": "^6.9.1",
     "axios": "^1.7.8",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",

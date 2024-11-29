@@ -1,5 +1,4 @@
 "use client";
-import { useAccount } from "wagmi";
 import MainLayout from "@/components/layouts/MainLayout";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
@@ -11,7 +10,6 @@ interface Message {
 }
 
 export default function Home() {
-  const { address } = useAccount();
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<echarts.ECharts | null>(null);
   const [query, setQuery] = useState("");
@@ -143,7 +141,7 @@ export default function Home() {
 
     try {
       const response = await axios.get(
-        `http://localhost:4000/search?userId=X1L2QMdDesYN2iWzy0Gu0mmskjY2&query=${encodeURIComponent(
+        `https://omiverse-gem1.onrender.com/search?userId=X1L2QMdDesYN2iWzy0Gu0mmskjY2&query=${encodeURIComponent(
           query
         )}`
       );
@@ -176,7 +174,7 @@ export default function Home() {
     const fetchAndRenderGraph = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:4000/graph?userId=X1L2QMdDesYN2iWzy0Gu0mmskjY2"
+          "https://omiverse-gem1.onrender.com/graph?userId=X1L2QMdDesYN2iWzy0Gu0mmskjY2"
         );
         const { nodes, edges } = response.data as {
           nodes: {
@@ -223,57 +221,50 @@ export default function Home() {
   return (
     <MainLayout>
       <div className="text-center">
-        {address ? (
-          <>
-            <div className="mb-8">{`Hello World, ${address}`}</div>
-            <div
-              ref={chartRef}
-              className="w-full h-[600px] rounded-lg border border-gray-800"
-            />
-            <div className="mt-8 max-w-3xl mx-auto">
-              <div className="bg-gray-800 rounded-lg mb-4 p-4 h-[300px] overflow-y-auto text-left">
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`mb-4 flex ${
-                      message.role === "user" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-lg p-3 ${
-                        message.role === "user" ? "bg-blue-600" : "bg-gray-700"
-                      }`}
-                    >
-                      {message.content}
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-              <form onSubmit={handleSearch} className="flex gap-2">
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Ask me anything about your connections..."
-                  className="flex-1 px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={isLoading}
-                />
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    isLoading ? "opacity-50 cursor-not-allowed" : ""
+        <div
+          ref={chartRef}
+          className="w-full h-[600px] rounded-lg border border-gray-800"
+        />
+        <div className="mt-8 max-w-3xl mx-auto">
+          <div className="bg-gray-800 rounded-lg mb-4 p-4 h-[300px] overflow-y-auto text-left">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`mb-4 flex ${
+                  message.role === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-lg p-3 ${
+                    message.role === "user" ? "bg-blue-600" : "bg-gray-700"
                   }`}
                 >
-                  {isLoading ? "Searching..." : "Search"}
-                </button>
-              </form>
-            </div>
-          </>
-        ) : (
-          <div className="text-2xl">Connect your wallet to get started</div>
-        )}
+                  {message.content}
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Ask me anything..."
+              className="flex-1 px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isLoading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {isLoading ? "Searching..." : "Search"}
+            </button>
+          </form>
+        </div>
       </div>
     </MainLayout>
   );
