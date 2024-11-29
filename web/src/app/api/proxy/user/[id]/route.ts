@@ -9,7 +9,7 @@ export async function GET(
     console.log("Fetching user data for ID:", userId);
 
     const backendResponse = await fetch(
-      `http://localhost:4000/user/${userId}`,
+      `https://omiverse-gem1.onrender.com/user/${userId}`,
       {
         method: "GET",
         headers: {

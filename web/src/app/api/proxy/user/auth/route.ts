@@ -5,13 +5,16 @@ export async function POST(req: Request) {
     const data = await req.json();
     console.log("Proxying request to backend:", data);
 
-    const backendResponse = await fetch("http://localhost:4000/user/auth", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+    const backendResponse = await fetch(
+      "https://omiverse-gem1.onrender.com/user/auth",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
 
     const responseData = await backendResponse.json();
     console.log("Backend response:", responseData);
