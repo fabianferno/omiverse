@@ -34,7 +34,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(morgan("dev"));
-
 // Types
 interface User {
   name: string;
@@ -42,41 +41,78 @@ interface User {
   createdAt: Date;
 }
 
-// User Routes
-// app.post("/users", async (req: Request, res: Response) => {
-//   try {
-//     const { name, email } = req.body;
+app.post("/user/auth", async (req: Request, res: Response) => {
+  try {
+    const { userId, telegramId, telegramUsername } = req.body;
+    console.log("Received auth request:", {
+      userId,
+      telegramId,
+      telegramUsername,
+    });
 
-//     if (!name || !email) {
-//       return res.status(400).json({ error: "Name and email are required" });
-//     }
+    const usersCollection = db.db(dbName).collection("users");
+    const existingUser = await usersCollection.findOne({ userId });
+    if (existingUser) {
+      console.log("User already exists:", existingUser);
+      return res.json({ success: true });
+    }
 
-//     const user: User = {
-//       name,
-//       email,
-//       createdAt: new Date(),
-//     };
+    if (!userId || !telegramId || !telegramUsername) {
+      console.log("Missing required fields:", {
+        userId,
+        telegramId,
+        telegramUsername,
+      });
+      return res
+        .status(400)
+        .json({ error: "All fields are required", success: false });
+    }
 
-//     const result = await db.db(dbName).collection("users").insertOne(user);
-//     res.status(201).json({
-//       message: "User created successfully",
-//       userId: result.insertedId,
-//     });
-//   } catch (error) {
-//     console.error("Error creating user:", error);
-//     res.status(500).json({ error: "Failed to create user" });
-//   }
-// });
+    const user = {
+      userId,
+      telegramId,
+      telegramUsername,
+      createdAt: new Date(),
+    };
 
-// app.get("/users", async (_req: Request, res: Response) => {
-//   try {
-//     const users = await db.db(dbName).collection("users").find({}).toArray();
-//     res.json(users);
-//   } catch (error) {
-//     console.error("Error fetching users:", error);
-//     res.status(500).json({ error: "Failed to fetch users" });
-//   }
-// });
+    const result = await db.db(dbName).collection("users").insertOne(user);
+    console.log("User stored successfully:", result);
+
+    res.status(201).json({
+      message: "User information stored successfully",
+      userId: result.insertedId,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error storing user information:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to store user information", success: false });
+  }
+});
+
+// Get user by id
+app.get("/user/:id", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await db.db(dbName).collection("users").findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ error: "User not found", success: false });
+    }
+
+    res.status(200).json({
+      message: "User found",
+      userId: user.userId,
+      telegramId: user.telegramId,
+      telegramUsername: user.telegramUsername,
+      createdAt: user.createdAt,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error getting user:", error);
+    res.status(500).json({ error: "Failed to get user", success: false });
+  }
+});
 
 // Process transcript and extract entities
 async function processTranscript(

@@ -56,8 +56,8 @@ export async function POST(req: Request) {
         first_name: data.first_name,
         last_name: data.last_name,
         photo_url: data.photo_url,
-        auth_date: data.auth_date
-      }
+        auth_date: data.auth_date,
+      },
     });
   } catch (error) {
     console.error("Telegram auth error:", error);
