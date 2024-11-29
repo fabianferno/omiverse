@@ -114,6 +114,25 @@ app.get("/user/:id", async (req, res) => {
   }
 });
 
+//setup Completed endpoint
+app.get("/setupcompleted", async (req: Request, res: Response) => {
+  const uid = req.query.uid;
+  if (!uid || typeof uid !== "string") {
+    return res
+      .status(400)
+      .json({ error: "User ID (uid) is required as a query parameter" });
+  }
+  const user = await db.db(dbName).collection("users").findOne({ userId: uid });
+  if (!user) {
+    return res.status(404).json({
+      is_setup_completed: false,
+    });
+  }
+  res.status(200).json({
+    is_setup_completed: true,
+  });
+});
+
 // Process transcript and extract entities
 async function processTranscript(
   transcriptId: string,
