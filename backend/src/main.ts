@@ -114,6 +114,36 @@ app.get("/user/:id", async (req, res) => {
   }
 });
 
+// Get user by Telegram Id
+app.get("/telegram-user/:id", async (req, res) => {
+  try {
+    const telegramId = req.params.id;
+    console.log(telegramId);
+    const user = await db
+      .db(dbName)
+      .collection("users")
+      .findOne({ telegramId: parseInt(telegramId) });
+    console.log(user);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ error: "telegramId not found", success: false });
+    }
+
+    res.status(200).json({
+      message: "User found",
+      userId: user.userId,
+      telegramId: user.telegramId,
+      telegramUsername: user.telegramUsername,
+      createdAt: user.createdAt,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error getting user:", error);
+    res.status(500).json({ error: "Failed to get user", success: false });
+  }
+});
+
 //setup Completed endpoint
 app.get("/setupcompleted", async (req: Request, res: Response) => {
   const uid = req.query.uid;

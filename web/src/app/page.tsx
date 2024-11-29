@@ -1,8 +1,29 @@
 "use client";
 import MainLayout from "@/components/layouts/MainLayout";
 import axios from "axios";
-import { useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import * as echarts from "echarts";
+
+declare global {
+  interface Window {
+    Telegram: {
+      WebApp: {
+        init: () => void;
+        ready: () => void;
+        expand: () => void;
+        initData: string;
+        initDataUnsafe: {
+          user?: {
+            id: number;
+            username?: string;
+          };
+          hash?: string;
+        };
+        onEvent: (eventType: string, callback: () => void) => void;
+      };
+    };
+  }
+}
 
 interface Message {
   role: "user" | "assistant";
@@ -16,6 +37,117 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [telegramState, setTelegramState] = useState({
+    isAvailable: false,
+    userId: null as number | null,
+    error: null as string | null,
+  });
+
+  useEffect(() => {
+    const initTelegram = async () => {
+      try {
+        // Wait for window to be defined
+        if (typeof window === "undefined") {
+          setTelegramState((prev) => ({
+            ...prev,
+            error: "Window not defined",
+          }));
+          return;
+        }
+
+        // Check if Telegram WebApp is available
+        if (!window.Telegram?.WebApp) {
+          setTelegramState((prev) => ({
+            ...prev,
+            error: "Telegram WebApp not available",
+          }));
+          return;
+        }
+
+        // Initialize WebApp
+        const tg = window.Telegram.WebApp;
+
+        // Initialize WebApp first
+        try {
+          tg.init();
+        } catch (initError) {
+          console.log("Init error (non-fatal):", initError);
+        }
+
+        // Add a small delay to ensure initialization
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Set ready state
+        try {
+          tg.ready();
+        } catch (readyError) {
+          console.log("Ready error (non-fatal):", readyError);
+        }
+
+        // Expand the WebApp
+        try {
+          tg.expand();
+        } catch (expandError) {
+          console.log("Expand error (non-fatal):", expandError);
+        }
+
+        // Log the entire WebApp object for debugging
+        console.log("Telegram WebApp:", tg);
+        console.log("InitDataUnsafe:", tg.initDataUnsafe);
+
+        // Check if we have user data
+        const user = tg.initDataUnsafe?.user;
+        if (!user?.id) {
+          setTelegramState((prev) => ({
+            ...prev,
+            error: "No user ID in Telegram data",
+          }));
+          return;
+        }
+
+        // Update Telegram state
+        setTelegramState({
+          isAvailable: true,
+          userId: user.id,
+          error: null,
+        });
+
+        // Try to get our user ID
+        try {
+          const response = await axios.get(
+            `/api/proxy/telegram-user/${user.id}`
+          );
+          console.log("Backend response:", response.data);
+
+          if (response.data.success) {
+            setUserId(response.data.userId);
+            fetchAndRenderGraph();
+          } else {
+            setTelegramState((prev) => ({
+              ...prev,
+              error: `Backend error: ${response.data.error}`,
+            }));
+          }
+        } catch (error) {
+          setTelegramState((prev) => ({
+            ...prev,
+            error: `API error: ${error}`,
+          }));
+          console.error("API error:", error);
+        }
+      } catch (error) {
+        setTelegramState((prev) => ({
+          ...prev,
+          error: `Initialization error: ${error}`,
+        }));
+        console.error("Telegram init error:", error);
+      }
+    };
+
+    // Add a small delay before initialization
+    setTimeout(initTelegram, 1000);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -96,8 +228,8 @@ export default function Home() {
               },
             })),
             force: {
-              repulsion: 1000,
-              edgeLength: 300,
+              repulsion: 700,
+              edgeLength: 200,
               friction: 0.6,
               gravity: 0.1,
               layoutAnimation: true,
@@ -141,7 +273,7 @@ export default function Home() {
 
     try {
       const response = await axios.get(
-        `https://omiverse-gem1.onrender.com/search?userId=X1L2QMdDesYN2iWzy0Gu0mmskjY2&query=${encodeURIComponent(
+        `https://omiverse-gem1.onrender.com/search?userId=${userId}&query=${encodeURIComponent(
           query
         )}`
       );
@@ -169,35 +301,36 @@ export default function Home() {
       setQuery("");
     }
   };
+  const fetchAndRenderGraph = async () => {
+    if (!userId) return;
+
+    try {
+      const response = await axios.get(
+        `https://omiverse-gem1.onrender.com/graph?userId=${userId}`
+      );
+      const { nodes, edges } = response.data as {
+        nodes: {
+          id: string;
+          label: string;
+          type: "PERSON" | "THING" | "EVENT" | "OTHER";
+        }[];
+        edges: {
+          source: string;
+          target: string;
+          label: string;
+        }[];
+      };
+
+      console.log(nodes, edges);
+      renderGraph(nodes, edges);
+    } catch (error) {
+      console.error("Error fetching graph data:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchAndRenderGraph = async () => {
-      try {
-        const response = await axios.get(
-          "https://omiverse-gem1.onrender.com/graph?userId=X1L2QMdDesYN2iWzy0Gu0mmskjY2"
-        );
-        const { nodes, edges } = response.data as {
-          nodes: {
-            id: string;
-            label: string;
-            type: "PERSON" | "THING" | "EVENT" | "OTHER";
-          }[];
-          edges: {
-            source: string;
-            target: string;
-            label: string;
-          }[];
-        };
-
-        console.log(nodes, edges);
-        renderGraph(nodes, edges);
-      } catch (error) {
-        console.error("Error fetching graph data:", error);
-      }
-    };
-
     fetchAndRenderGraph();
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     return () => {
@@ -206,7 +339,7 @@ export default function Home() {
         chartInstance.current = null;
       }
     };
-  }, []);
+  }, [userId]);
 
   const getNodeColor = (type: string) => {
     const colors = {
