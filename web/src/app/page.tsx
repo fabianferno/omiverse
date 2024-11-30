@@ -3,8 +3,11 @@ import MainLayout from "@/components/layouts/MainLayout";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import * as echarts from "echarts";
-import { useToPng } from '@hugocxl/react-to-image'
-
+import html2canvas from 'html2canvas';
+import { useAccount, useChainId, usePublicClient, useSignTypedData } from "wagmi";
+import { createCreatorClient } from "@zoralabs/protocol-sdk";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { MintButton } from "@/components/MintButton";
 declare global {
   interface Window {
     Telegram: {
@@ -31,17 +34,38 @@ interface Message {
   content: string;
 }
 
+async function saveAndGetCID(
+  data: any,
+  pinataMetadata = { name: "via karma-gap-sdk" }
+) {
+  try {
+    const res = await axios.post(
+      "https://api.pinata.cloud/pinning/pinJSONToIPFS",
+      {
+        pinataContent: data,
+        pinataMetadata: pinataMetadata,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT_TOKEN}`,
+        },
+      }
+    );
+    return res.data.IpfsHash;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+
+
+
 export default function Home() {
   const [userId, setUserId] = useState<string | null>("X1L2QMdDesYN2iWzy0Gu0mmskjY2"); // TODO: Revert
-  const [state, convertToPng, nftCaptureRef] = useToPng<HTMLDivElement>({
-    onSuccess: (data: string) => {
-      console.log(data)
-      const link = document.createElement('a')
-      link.href = data
-      link.download = 'chart.png'
-      link.click()
-    }
-  })
+  const nftCaptureRef = useRef<HTMLDivElement>(null);
+  const [isPreparingNFT, setIsPreparingNFT] = useState(false);
+  const [tokenUri, setTokenUri] = useState("");
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<echarts.ECharts | null>(null);
   const [query, setQuery] = useState("");
@@ -54,6 +78,11 @@ export default function Home() {
     userId: null as number | null,
     error: null as string | null,
   });
+
+  const chainId = useChainId();
+  const publicClient = usePublicClient();
+  const { address: creatorAddress, isConnected } = useAccount();
+  const { signTypedData, data: signature } = useSignTypedData();
 
   useEffect(() => {
     const initTelegram = async () => {
@@ -129,7 +158,6 @@ export default function Home() {
           const response = await axios.get(
             `/api/proxy/telegram-user/${user.id}`
           );
-          console.log("Backend response:", response.data);
 
           if (response.data.success) {
             setUserId(response.data.userId);
@@ -298,7 +326,6 @@ export default function Home() {
       setMessages((prev) => [...prev, { role: "assistant", content: answer }]);
 
       if (graphData) {
-        console.log(graphData.nodes, graphData.edges);
         renderGraph(graphData.nodes, graphData.edges);
       }
     } catch (error) {
@@ -337,7 +364,6 @@ export default function Home() {
         }[];
       };
 
-      console.log(nodes, edges);
       renderGraph(nodes, edges);
     } catch (error) {
       console.error("Error fetching graph data:", error);
@@ -367,6 +393,70 @@ export default function Home() {
     return colors[type as keyof typeof colors] || colors.OTHER;
   };
 
+  const downloadAsPng = async () => {
+    if (!nftCaptureRef.current) return;
+
+    try {
+      const canvas = await html2canvas(nftCaptureRef.current, {
+        backgroundColor: null,
+        scale: 2, // Higher quality
+      });
+
+      const image = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = 'knowledge-graph.png';
+      link.click();
+    } catch (error) {
+      console.error('Error generating image:', error);
+    }
+  };
+
+  const prepareNFT = async () => {
+    console.log(creatorAddress, publicClient);
+    if (!nftCaptureRef.current || !creatorAddress) return;
+
+    setIsPreparingNFT(true);
+    try {
+      // Generate canvas from the chart
+      const canvas = await html2canvas(nftCaptureRef.current, {
+        backgroundColor: null,
+        scale: 2, // Higher quality
+      });
+
+      // Convert to blob
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+        }, 'image/png');
+      });
+
+      // Create file from blob
+      const file = new File([blob], 'knowledge-graph.png', { type: 'image/png' });
+
+      // Upload to IPFS
+      const imageUri = await saveAndGetCID(file);
+
+      // Create metadata
+      const metadata = {
+        name: "Knowledge Graph NFT",
+        description: "A visualization of connected knowledge",
+        image: imageUri,
+        attributes: []
+      };
+
+      // Upload metadata to IPFS
+      const metadataUri = await saveAndGetCID(metadata);
+      const tokenUri = `ipfs://${metadataUri}`;
+
+      setTokenUri(tokenUri);
+    } catch (error) {
+      console.error("Minting error:", error);
+    } finally {
+      setIsPreparingNFT(false);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="text-center">
@@ -376,15 +466,38 @@ export default function Home() {
             className="w-full h-[600px] rounded-lg border border-zinc-800"
           />
         </section>
-        <button
-          onClick={convertToPng}
-          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg border border-zinc-700 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          Download as PNG
-        </button>
+        <div className="mt-4 flex justify-center gap-4">
+          {!isConnected && !publicClient ? (
+            <ConnectButton />
+          ) : (
+            <div>
+              {tokenUri ? (
+                <MintButton tokenUri={tokenUri} />
+              ) : (
+                <button
+                  onClick={prepareNFT}
+                  disabled={isPreparingNFT}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg border border-zinc-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {isPreparingNFT ? "Preparing..." : "Prepare to NFT"}
+                </button>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={downloadAsPng}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg border border-zinc-700 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Download as PNG
+          </button>
+        </div>
         <div className="mt-8 mx-auto">
           <div className="bg-zinc-900 rounded-lg mb-4 p-4 h-[300px] overflow-y-auto text-left">
             {messages.map((message, index) => (

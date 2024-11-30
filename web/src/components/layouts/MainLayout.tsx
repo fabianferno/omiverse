@@ -1,6 +1,7 @@
 "use client";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import Image from "next/image";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function Layout({
   children,
@@ -10,7 +11,7 @@ export default function Layout({
   return (
     <main className="container flex min-h-screen flex-col items-center justify-center p-10">
       <div className="absolute top-5 right-12 mr-5">
-
+        <ConnectButton />
       </div>
       <div className="absolute top-5 right-5">
         <ModeToggle />
