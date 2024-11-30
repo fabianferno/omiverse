@@ -20,8 +20,12 @@ Once authenticated, you will see your username displayed. Refresh the app to com
 ---
 
 ## 3. Install the App  
-Install the Omiverse application on your device to begin exploring its features.  
-![Step 3](assets/step_3.png)
+Once authenticated you can verify by the green tick. Now install the Omiverse application on your device to begin exploring its features.  
+
+<img width="328" alt="Screenshot 2024-11-30 at 11 45 43 PM" src="https://github.com/user-attachments/assets/942aa249-348c-44f9-92d7-bb3d3b12e146">
+
+
+
 
 ---
 
