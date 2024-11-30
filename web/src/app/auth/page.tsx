@@ -123,8 +123,13 @@ const TelegramLoginButton = () => {
 
   if (!uid) {
     return (
-      <div className="text-red-400 bg-red-900/20 px-4 py-2 rounded-lg ring-1 ring-red-800">
-        Error: No UID provided in URL parameters
+      <div className="text-red-400/90 bg-red-500/10 px-6 py-4 rounded-xl border border-red-500/20 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span>No UID provided in URL parameters</span>
+        </div>
       </div>
     );
   }
@@ -132,7 +137,7 @@ const TelegramLoginButton = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-400"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-zinc-400 border-t-zinc-200"></div>
       </div>
     );
   }
@@ -140,25 +145,27 @@ const TelegramLoginButton = () => {
   return (
     <div className="flex flex-col items-center space-y-4 w-full max-w-md mx-auto">
       {user ? (
-        <div className="flex flex-col items-center space-y-2 p-8 bg-zinc-900 rounded-xl ring-1 ring-zinc-700 w-full">
-          <div className="text-center">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-700 flex items-center justify-center mb-6 shadow-lg ring-1 ring-zinc-600">
+        <div className="flex flex-col items-center space-y-2 p-8 bg-zinc-900/50 backdrop-blur-sm rounded-2xl border border-zinc-800/50 w-full">
+          <div className="text-center mb-5">
+            <div className="relative inline-block">
+              <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-700/50 flex items-center justify-center mb-3 shadow-xl ring-1 ring-zinc-700/50 backdrop-blur-sm">
                 {user.photo_url ? (
                   <img
                     src={user.photo_url}
                     alt="Profile"
-                    className="w-24 h-24 rounded-xl object-cover"
+                    className="w-28 h-28 rounded-2xl object-cover"
                   />
                 ) : (
-                  <span className="text-3xl font-bold text-zinc-300">
+                  <span className="text-4xl font-bold text-zinc-300">
                     {user.username ? user.username[0].toUpperCase() : "U"}
                   </span>
                 )}
               </div>
-              <div className="absolute -bottom-2 -right-2 bg-zinc-700 rounded-full p-1.5 ring-1 ring-zinc-600">
+            </div>
+            <h2 className="flex items-center gap-2 text-2xl font-bold mb-8 text-white">
+              {user.first_name || "Telegram User"} <div className=" bg-emerald-500/90 rounded-full p-1.5 shadow-lg border border-emerald-400/20 backdrop-blur-sm">
                 <svg
-                  className="w-3 h-3 text-zinc-300"
+                  className="w-3.5 h-3.5 text-white"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -169,23 +176,19 @@ const TelegramLoginButton = () => {
                   />
                 </svg>
               </div>
-            </div>
-            <h2 className="text-2xl font-bold mb-2 text-zinc-200">
-              {user.first_name || "Telegram User"}
             </h2>
-            <div className="space-y-1">
-              <p className="text-zinc-400 text-sm">
-                <span className="text-zinc-500">ID:</span> {user.id}
+            <div className="space-y-2">
+              <p className="text-zinc-300 text-sm bg-zinc-800/50 px-4 py-2 rounded-lg backdrop-blur-sm border border-zinc-700/50">
+                <span className="text-zinc-400">#</span> {user.id}
               </p>
               {user.username && (
-                <p className="text-zinc-400 text-sm">
-                  <span className="text-zinc-500">Username:</span> @
-                  {user.username}
+                <p className="text-zinc-300 text-sm bg-zinc-800/50 px-4 py-2 rounded-lg backdrop-blur-sm border border-zinc-700/50">
+                  @{user.username}
                 </p>
               )}
             </div>
           </div>
-          <div className="mt-6 flex items-center space-x-2 text-sm text-zinc-400">
+          <div className="mt-10 flex items-center gap-2 text-sm text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-lg border border-emerald-500/20 backdrop-blur-sm">
             <svg
               className="w-4 h-4"
               fill="none"
@@ -199,13 +202,13 @@ const TelegramLoginButton = () => {
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span>Authenticated with Telegram</span>
+            <span>Successfully authenticated with Telegram</span>
           </div>
         </div>
       ) : (
         <div
           id="telegram-login-container"
-          className="p-8 bg-zinc-900 rounded-xl ring-1 ring-zinc-700 w-full"
+          className="p-8 bg-zinc-900/50 backdrop-blur-sm rounded-2xl border border-zinc-800/50 w-full"
         ></div>
       )}
     </div>
@@ -214,11 +217,14 @@ const TelegramLoginButton = () => {
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-[#111] flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        <h1 className="text-3xl font-bold text-center text-zinc-200">
-          Welcome to <span className="text-zinc-300">Omiverse</span>
-        </h1>
+    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-58">
+        <div className="text-center space-y-3">
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-zinc-200 to-zinc-400">
+            Welcome to omiverse
+          </h1>
+          <p className="text-zinc-400">Connect your Telegram account to setup your second brain</p>
+        </div>
         <TelegramLoginButton />
       </div>
     </div>
