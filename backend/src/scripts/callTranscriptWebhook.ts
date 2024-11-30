@@ -12,9 +12,8 @@ interface TranscriptSegment {
 }
 
 async function callTranscriptWebhook() {
-  const baseUrl = "http://localhost:4000"; // Using the same port as in main.ts
   const uid = "X1L2QMdDesYN2iWzy0Gu0mmskjY2";
-  const webhookUrl = `${baseUrl}/webhook/transcript?uid=${uid}`;
+  const webhookUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/webhook/transcript?uid=${uid}`;
 
   const data: TranscriptData = {
     id: "f054176b-e566-4ba8-9b77-6975aaf0ebd1",

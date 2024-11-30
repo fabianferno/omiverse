@@ -1,6 +1,4 @@
 "use client";
-
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import Image from "next/image";
 
@@ -12,7 +10,7 @@ export default function Layout({
   return (
     <main className="container flex min-h-screen flex-col items-center justify-center p-10">
       <div className="absolute top-5 right-12 mr-5">
-        {/* <ConnectButton /> */}
+
       </div>
       <div className="absolute top-5 right-5">
         <ModeToggle />
@@ -27,12 +25,14 @@ export default function Layout({
           priority
         />
         <div className="px-5 mb-1">
-          <div className="text-3xl font-bold">some app</div>
-          <div className="text-lg ">this app does something</div>
+          <div className="text-3xl font-bold">omiverse</div>
+          <div className="text-lg ">
+            your second brain
+          </div>
         </div>
       </div>
 
-      <section className="lg:max-w-5xl lg:w-full">
+      <section className="lg:max-w-5xl lg:w-full mt-24">
         <div className="ring-1 ring-zinc-700 rounded-xl p-8 w-full">
           <div className="flex justify-center items-start flex-col">
             <div className="flex justify-center items-between flex-col w-full">

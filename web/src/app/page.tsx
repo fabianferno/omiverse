@@ -1,8 +1,9 @@
 "use client";
 import MainLayout from "@/components/layouts/MainLayout";
 import axios from "axios";
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as echarts from "echarts";
+import { useToPng } from '@hugocxl/react-to-image'
 
 declare global {
   interface Window {
@@ -31,13 +32,23 @@ interface Message {
 }
 
 export default function Home() {
+  const [userId, setUserId] = useState<string | null>("X1L2QMdDesYN2iWzy0Gu0mmskjY2"); // TODO: Revert
+  const [state, convertToPng, nftCaptureRef] = useToPng<HTMLDivElement>({
+    onSuccess: (data: string) => {
+      console.log(data)
+      const link = document.createElement('a')
+      link.href = data
+      link.download = 'chart.png'
+      link.click()
+    }
+  })
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<echarts.ECharts | null>(null);
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+
   const [telegramState, setTelegramState] = useState({
     isAvailable: false,
     userId: null as number | null,
@@ -228,10 +239,10 @@ export default function Home() {
               },
             })),
             force: {
-              repulsion: 700,
-              edgeLength: 200,
-              friction: 0.6,
-              gravity: 0.1,
+              repulsion: 1500,
+              edgeLength: 300,
+              friction: 0.3,
+              gravity: 0.05,
               layoutAnimation: true,
               initLayout: "force",
             },
@@ -241,6 +252,10 @@ export default function Home() {
                 width: 5,
               },
             },
+            edgeSymbolSize: 8,
+            edgeSymbol: "arrow",
+            symbolSize: 15,
+            symbol: "circle",
           },
         ],
       };
@@ -273,7 +288,7 @@ export default function Home() {
 
     try {
       const response = await axios.get(
-        `https://omiverse-gem1.onrender.com/search?userId=${userId}&query=${encodeURIComponent(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/search?userId=${userId}&query=${encodeURIComponent(
           query
         )}`
       );
@@ -301,12 +316,13 @@ export default function Home() {
       setQuery("");
     }
   };
+
   const fetchAndRenderGraph = async () => {
     if (!userId) return;
 
     try {
       const response = await axios.get(
-        `https://omiverse-gem1.onrender.com/graph?userId=${userId}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/graph?userId=${userId}`
       );
       const { nodes, edges } = response.data as {
         nodes: {
@@ -354,23 +370,32 @@ export default function Home() {
   return (
     <MainLayout>
       <div className="text-center">
-        <div
-          ref={chartRef}
-          className="w-full h-[600px] rounded-lg border border-gray-800"
-        />
-        <div className="mt-8 max-w-3xl mx-auto">
-          <div className="bg-gray-800 rounded-lg mb-4 p-4 h-[300px] overflow-y-auto text-left">
+        <section ref={nftCaptureRef}>
+          <div
+            ref={chartRef}
+            className="w-full h-[600px] rounded-lg border border-zinc-800"
+          />
+        </section>
+        <button
+          onClick={convertToPng}
+          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg border border-zinc-700 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Download as PNG
+        </button>
+        <div className="mt-8 mx-auto">
+          <div className="bg-zinc-900 rounded-lg mb-4 p-4 h-[300px] overflow-y-auto text-left">
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`mb-4 flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`mb-4 flex ${message.role === "user" ? "justify-end" : "justify-start"
+                  }`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
-                    message.role === "user" ? "bg-blue-600" : "bg-gray-700"
-                  }`}
+                  className={`max-w-[80%] rounded-lg p-3 ${message.role === "user" ? "border border-teal-600" : "bg-zinc-700"
+                    }`}
                 >
                   {message.content}
                 </div>
@@ -384,15 +409,14 @@ export default function Home() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Ask me anything..."
-              className="flex-1 px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-2 bg-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               disabled={isLoading}
             />
             <button
               type="submit"
               disabled={isLoading}
-              className={`px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                isLoading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              className={`px-6 py-2 font-bold bg-teal-700 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
             >
               {isLoading ? "Searching..." : "Search"}
             </button>

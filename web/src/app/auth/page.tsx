@@ -217,7 +217,7 @@ const TelegramLoginButton = () => {
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-800 to-zinc-800 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-58">
         <div className="text-center space-y-3">
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-zinc-200 to-zinc-400">
