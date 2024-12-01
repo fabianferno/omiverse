@@ -592,7 +592,11 @@ export default function Home() {
                 Authentication Required
               </h2>
               <p className="text-gray-600">
-                Authenticate in OMI to access your Knowledge Graph
+                Authenticate in OMI to access your Knowledge Graph.
+              </p>
+              <p className="text-gray-600">
+                If authenticated , please wait for us to load your Knowledge
+                Graph
               </p>
             </div>
           </div>
