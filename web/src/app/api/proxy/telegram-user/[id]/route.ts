@@ -7,7 +7,7 @@ export async function GET(
   try {
     const telegramId = params.id;
     const response = await fetch(
-      `http://localhost:4000/telegram-user/${telegramId}`,
+      `https://omiverse-gem1.onrender.com/telegram-user/${telegramId}`,
       {
         method: "GET",
         headers: {
