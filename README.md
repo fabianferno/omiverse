@@ -1,65 +1,92 @@
-# Setting Up Omiverse
+## Inspiration
 
-Follow these steps to set up and explore the Omiverse application effectively:
+The inspiration behind omiverse came from a desire to bring to life a brilliant technology which was featured in this film called, "Transcendence" - starring Johnny Depp. In this movie Johnny Depp, an AI scientist - comes up with a way to create a digital copy of his consiousness by capturing all his memories. When I first saw the demo of an omi device - this struck my mind immediately. We could use omi to start training a "second brain" which grows as we use it - essentially a memory engine. 
+
+![Screenshots](https://i.ibb.co/mzFwKWr/Screenshot-2024-12-01-104520.png)
+
+
+## What It Does
+
+Omiverse transforms the continuous stream of transcripts and moments captured by the Omi wearable into a dynamic, personalized knowledge graph. It identifies key entities (people, places, things - nouns) and relationships from your daily interactions (actions), constructing a visual map of your experiences beginning to build a "second brain" with this graph. With Omiverse, you can:
+
+- **Talk to your second brain** using natural language to recall past events, conversations, or interactions. Built over a easy to use telegram mini app to make this seamless 
+- **Visualize neurons** between different aspects of your life through an interactive, dynamic graph.
+- **Mint and share memories** of your knowledge graph as NFTs, allowing you to share meaningful experiences securely. 
+- **Enhance self-understanding**, effectively acting as a second-brain that learns and grows with you.
+
+![Screenshots](https://i.ibb.co/NpH4pDZ/Screenshot-2024-12-01-110622.png)
+
+## Setup
+
+- Setup Guide avaialble [here](https://github.com/fabianferno/omiverse/edit/main/setup.md)
+
+
+
+
+
+## How We Built It
+
+1. **Data Collection and Storage**
+   - The omiverse webhook stores transcripts in MongoDB, along with generated embeddings for semantic understanding.
+
+2. **Natural Language Processing**
+   - We developed a grammar engine to parse transcript chunks into topics, entities (nouns), and relationships (actions).
+   - Utilized advanced NLP techniques to extract meaningful information for the knowledge graph. 
+   - Represented entities as nodes and relationships as edges in a mongo graph datastore.
+   - Created backend endpoints to serve nodes and edges for visualization and querying.
+
+3. **RAG Query Engine Implementation**
+   - Implemented a Retrieval Augmented Generation system to handle natural language queries.
+   - Enabled dynamic adjustments of the graph based on user queries, displaying relevant information.
+
+4. **Visualization and User Interface**
+   - Built an interactive web interface using graph visualization libraries like Apache echarts.js.
+   - Allowed users to explore their knowledge graph, see connections, and interact with the data in real-time using a <strong>Telegram mini app</strong>
+
+6. **NFT Integration**
+   - Enabled minting of knowledge graph segments as NFTs - powered by Zora network.
+
+## Challenges We Ran Into
+
+- **Real-Time Data Processing**
+  - Handling continuous streams of transcripts without latency.
+  - **Solution:** Implemented asynchronous processing and optimized database queries for efficiency.
+
+- **Accurate Entity and Relationship Extraction**
+  - Dealing with the complexities of natural, informal speech. Identifying context aware names of the first, second and third person. 
+  - **Solution:** Employed and fine-tuned advanced NLP models to improve extraction accuracy.
+
+- **Scalability**
+  - Ensuring the system remains responsive as the knowledge graph grows.
+  - **Solution:** Leveraged scalable mongo cloud infrastructure and efficient data indexing strategies.
+ 
+
+## Accomplishments That We're Proud Of
+
+- **Creating a Second Brain**
+  - Successfully transformed passive audio transcripts into an interactive and meaningful knowledge base. 
+  - Achieved high accuracy in extracting entities and relationships from conversational speech by NLP techniques.
+
+- **Real-Time, Dynamic Visualization**
+  - Developed an intuitive interface that dynamically adjusts to user queries and highlights relevant information. 
+
+## What We Learned 
+
+- **Scalability Must Be a Forethought**
+  - Designing scalable systems from the beginning prevents future technical debt and bottlenecks. 
+
+## What's Next for Omiverse 
+
+- **Enhanced AI and NLP Capabilities**
+  - Incorporating more advanced models for better context understanding and predictive insights. 
+  - Providing users with deeper insights into their interactions and behaviors to promote personal growth.
+
+- **Community and Collaboration Features**
+  - Allowing users to share and collaborate on knowledge graphs within trusted networks.
+
+- **Voice Interface Integration**
+  - Enabling voice commands for a more natural and hands-free user experience. With the audio bytes data webhook - we aim to train private AI voice clones of the user and let the users talk with themselves over this second brain - sounds creepy but  this is the feature we're actively working on and we're super excited about it. 
 
 ---
 
-## 1. Authenticate with Telegram  
-Authenticate with your Telegram account to gain access to the mini app.  
-<img width="328" alt="Screenshot 2024-11-30 at 11 45 43 PM" src="https://github.com/user-attachments/assets/0494c1a4-459e-4884-b2da-59d4326b9d4f">
-
-
----
-
-## 2. View Your Username  
-Once authenticated, you will see your username displayed. Refresh the app to complete your setup.  
-
-<img width="328" alt="Screenshot 2024-11-30 at 11 45 43 PM" src="https://github.com/user-attachments/assets/07cdf0a0-b1d5-49fd-a4f2-1bb855e2200e">
-
-
----
-
-## 3. Install the App  
-Once authenticated you can verify by the green tick. Now install the Omiverse application on your device to begin exploring its features.  
-
-<img width="328" alt="Screenshot 2024-11-30 at 11 45 43 PM" src="https://github.com/user-attachments/assets/942aa249-348c-44f9-92d7-bb3d3b12e146">
-
-
-
-
----
-
-## 4. Create Memory Triggers  
-Engage in conversations and create memory triggers. These triggers will contribute to building your knowledge graph.  
-
-<img width="328" alt="Screenshot 2024-11-30 at 11 45 43 PM" src="https://github.com/user-attachments/assets/914ccc22-969b-4f41-939f-6747dff159d9">
-
----
-
-## 5. Open the OmiverseBot WebApp  
-Visit [t.me/OmiverseBot](https://t.me/OmiverseBot) in Telegram and open the web app to explore the graph.  
-
-<img width="328" alt="Screenshot 2024-11-30 at 11 45 43 PM" src="https://github.com/user-attachments/assets/fddf70b5-cef2-40a8-b143-b5f309d1b7b3">
-
-
-
----
-
-## 6. Interact with the Graph  
-Explore the knowledge graph and interact using the chat option below the graph.  
-
-<img width="328" alt="Screenshot 2024-11-30 at 11 45 43 PM" src="https://github.com/user-attachments/assets/9bb80b02-54d3-4845-9cd0-3dad19d2be56">
-
-
----
-
-
-## 7. Mint Memories Onchain  
-Mint your favorite incidents or relationships on the blockchain directly from the app.  
-
-<img width="328" alt="Screenshot 2024-11-30 at 11 45 43 PM" src="https://github.com/user-attachments/assets/81c8ecfb-1830-430c-bfb5-a49e96aa24fe">
-
-
----
-
-Enjoy building and exploring your personalized knowledge graph!
+Omiverse represents a fusion of innovative technologies aimed at revolutionizing personal knowledge management. Through this project, we not only pushed the boundaries of what's possible with AI wearables but also laid the groundwork for future developments that could significantly enhance how we interact with our own data.
