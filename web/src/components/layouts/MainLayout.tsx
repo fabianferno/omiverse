@@ -19,7 +19,7 @@ export default function Layout({
       <div className="absolute top-5 left-5 flex flex-row items-center bg-zinc-900 rounded-md p-2">
         <Image
           className="relative rounded-md"
-          src="/logo.gif"
+          src="/logo.png"
           alt="Logo"
           width={80}
           height={80}
