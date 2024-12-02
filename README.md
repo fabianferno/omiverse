@@ -18,7 +18,7 @@ Omiverse transforms the continuous stream of transcripts and moments captured by
 
 ## Setup
 
-- Setup Guide avaialble [here](https://github.com/fabianferno/omiverse/edit/main/setup.md)
+- Setup Guide avaialble [here](https://github.com/fabianferno/omiverse/blob/main/setup.md)
 
 
 
